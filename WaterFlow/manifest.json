@@ -1,0 +1,9 @@
+﻿{
+    "Name": "WaterFlow",
+    "Author": "blueberry",
+    "Version": "1.0.0",
+    "Description": "Changes the water flow direction for each location.",
+    "UniqueID": "blueberry.WaterFlow",
+    "EntryDll": "WaterFlow.dll",
+    "UpdateKeys": [ "Nexus:????" ]
+}
