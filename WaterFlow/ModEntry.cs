@@ -26,6 +26,7 @@ namespace WaterFlow
 	{
 		public enum WaterFlow
 		{
+			None = -1,
 			Up = 0,
 			Right = 1,
 			Down = 2,
@@ -47,6 +48,8 @@ namespace WaterFlow
 			if (ModEntry.State.Value.WaterFlow is WaterFlow.Up)
 				return true;
 
+			if (ModEntry.State.Value.WaterFlow is WaterFlow.None)
+				__instance.waterPosition = 0;
 			const int sourceX = 0;
 			const int sourceY = 2064;
 			const int rotation = 0;
