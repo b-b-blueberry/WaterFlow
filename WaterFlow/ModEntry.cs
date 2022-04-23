@@ -6,10 +6,13 @@ using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 using StardewValley;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using xTile;
+using xTile.Dimensions;
 using xTile.ObjectModel;
 using Colour = Microsoft.Xna.Framework.Color;
+using Rectangle = Microsoft.Xna.Framework.Rectangle;
 
 namespace WaterFlow
 {
@@ -20,6 +23,7 @@ namespace WaterFlow
 			"Beach",
 			"Forest"
 		};
+		public bool VerboseLogging { get; set; } = true;
 	}
 
 	public class ModEntry : Mod
@@ -32,12 +36,15 @@ namespace WaterFlow
 			Down = 2,
 			Left = 3
 		}
-		public const string MapProperty = "blueberry.water.flow";
+		public const string MapPropertyGlobal = "blueberry.water.flow.global";
+		public const string MapPropertyLocal = "blueberry.water.flow.local";
 		public const WaterFlow DefaultWaterFlow = WaterFlow.Down;
 
 		private class ModState
 		{
 			public WaterFlow WaterFlow = WaterFlow.Up;
+			public List<(WaterFlow flow, Rectangle area)> Areas = new List<(WaterFlow flow, Rectangle area)>();
+			public Dictionary<string, bool> VisitedLocations = new Dictionary<string, bool>();
 		}
 		private static readonly PerScreen<ModState> State = new PerScreen<ModState>(() => new ModState());
 
@@ -45,10 +52,15 @@ namespace WaterFlow
 		public static bool GameLocation_DrawWaterTile_Prefix(GameLocation __instance,
 			SpriteBatch b, int x, int y, Colour color)
 		{
-			if (ModEntry.State.Value.WaterFlow is WaterFlow.Up)
+			WaterFlow waterFlow = ModEntry.State.Value.WaterFlow;
+
+			if (ModEntry.State.Value.Areas.FirstOrDefault(pair => pair.area.Contains(x, y)) is var a && a != default)
+				waterFlow = a.flow;
+			
+			if (waterFlow is WaterFlow.Up)
 				return true;
 
-			if (ModEntry.State.Value.WaterFlow is WaterFlow.None)
+			if (waterFlow is WaterFlow.None)
 				__instance.waterPosition = 0;
 
 			const int sourceX = 0;
@@ -59,8 +71,8 @@ namespace WaterFlow
 			const SpriteEffects effects = SpriteEffects.None;
 			const float layerDepth = 0.56f;
 
-			bool isLeftOrRight = ModEntry.State.Value.WaterFlow is WaterFlow.Left or WaterFlow.Right;
-			bool isUpOrLeft = ModEntry.State.Value.WaterFlow is WaterFlow.Up or WaterFlow.Left;
+			bool isLeftOrRight = waterFlow is WaterFlow.Left or WaterFlow.Right;
+			bool isUpOrLeft = waterFlow is WaterFlow.Up or WaterFlow.Left;
 
 			int forLR = isLeftOrRight ? 1 : 0;
 			int forUD = 1 - forLR;
@@ -126,6 +138,68 @@ namespace WaterFlow
 		public override void Entry(IModHelper helper)
 		{
 			Config config = helper.ReadConfig<Config>();
+
+			bool parseLocalAreaValues(PropertyValue localValue, Size mapSize)
+			{
+				int i = 0;
+				string[] fields = null;
+				try
+				{
+					ModEntry.State.Value.Areas.Clear();
+					fields = localValue.ToString().Trim().Split();
+					for (; i < fields.Length; i += 5)
+					{
+						if (Enum.TryParse(enumType: typeof(WaterFlow), value: fields[i], ignoreCase: true, out object result)
+							&& result is WaterFlow flow)
+						{
+							int[] values = fields.Skip(i + 1).Take(4).ToList().ConvertAll(int.Parse).ToArray();
+							if (values[2] < 1)
+								values[2] = mapSize.Width;
+							if (values[3] < 1)
+								values[3] = mapSize.Height;
+							values[0] = Math.Min(mapSize.Width, Math.Max(0, values[0]));
+							values[1] = Math.Min(mapSize.Height, Math.Max(0, values[1]));
+							values[2] = Math.Min(mapSize.Width - values[0], values[2]);
+							values[3] = Math.Min(mapSize.Height - values[1], values[3]);
+							if (values[2] > 0 && values[3] > 0)
+							{
+								Rectangle area = new Rectangle(values[0], values[1], values[2], values[3]);
+								ModEntry.State.Value.Areas.Add((flow: flow, area: area));
+								if (config.VerboseLogging)
+								{
+									this.Monitor.Log(
+										message: $"Parsed '{localValue}' to {nameof(WaterFlow)} {flow}, {nameof(Rectangle)} {area}.",
+										level: LogLevel.Debug);
+								}
+								return true;
+							}
+							else
+							{
+								this.Monitor.Log(
+									message: $"Invalid parsed area ({nameof(Rectangle)}): {string.Join(' ', values)}",
+									level: LogLevel.Error);
+							}
+						}
+						else
+						{
+							this.Monitor.Log(
+								message: $"Invalid parsed flow ({nameof(WaterFlow)}): {fields[i + 0]}",
+								level: LogLevel.Error);
+						}
+					}
+				}
+				catch (Exception e)
+				{
+					this.Monitor.Log(
+						message: $"Error while reading {nameof(WaterFlow)} entry {i} of {fields?.Length / 5 ?? 0}:{Environment.NewLine}{e}",
+						level: LogLevel.Error);
+				}
+				this.Monitor.Log(
+					message: $"Failed to read local {nameof(WaterFlow)} entry:{Environment.NewLine}'{localValue}'",
+					level: LogLevel.Error);
+				return false;
+			}
+
 			Harmony harmony = new Harmony(id: this.ModManifest.UniqueID);
 			harmony.Patch(
 				original: AccessTools.Method(type: typeof(GameLocation), name: nameof(GameLocation.drawWaterTile),
@@ -136,18 +210,33 @@ namespace WaterFlow
 				if (e.NewLocation is null)
 				{
 					ModEntry.State.Value.WaterFlow = WaterFlow.Up;
+					ModEntry.State.Value.Areas.Clear();
 					return;
 				}
 				object result = WaterFlow.Up;
 				bool hasWater = e.NewLocation.waterTiles.waterTiles.Cast<WaterTiles.WaterTileData>().Any();
 				bool isDisabledInConfig = config.UpwardsLocations.Any(s => s.Equals(e.NewLocation.Name));
-				bool isEnabledInMap = e.NewLocation.Map.Properties.TryGetValue(key: ModEntry.MapProperty, out PropertyValue value)
+				bool isEnabledLocalInMap = e.NewLocation.Map.Properties.TryGetValue(key: ModEntry.MapPropertyLocal, out PropertyValue localValue)
+					&& parseLocalAreaValues(localValue: localValue, mapSize: e.NewLocation.Map.Layers[0].LayerSize);
+				bool isEnabledGlobalInMap = e.NewLocation.Map.Properties.TryGetValue(key: ModEntry.MapPropertyGlobal, out PropertyValue value)
 					&& Enum.TryParse(enumType: typeof(WaterFlow), value: value, ignoreCase: true, out result)
 					&& result is WaterFlow and not WaterFlow.Up;
-				if ((!isDisabledInConfig && hasWater) || isEnabledInMap)
+				if ((!isDisabledInConfig && hasWater) || isEnabledLocalInMap || isEnabledGlobalInMap)
 				{
-					this.Monitor.LogOnce(message: $"{e.NewLocation.Name} will flow {result.ToString().ToLower()}.", level: LogLevel.Trace);
-					ModEntry.State.Value.WaterFlow = isEnabledInMap ? (WaterFlow)result : ModEntry.DefaultWaterFlow;
+					if (config.VerboseLogging && !ModEntry.State.Value.VisitedLocations.ContainsKey(key: e.NewLocation.Name))
+					{
+						this.Monitor.Log(
+							message: $"{e.NewLocation.Name} will flow {result.ToString().ToLower()}.",
+							level: LogLevel.Debug);
+						foreach ((WaterFlow flow, Rectangle area) in ModEntry.State.Value.Areas)
+						{
+							this.Monitor.Log(
+								message: $"({flow}: {area})",
+								level: LogLevel.Debug);
+						}
+						ModEntry.State.Value.VisitedLocations[e.NewLocation.Name] = true;
+					}
+					ModEntry.State.Value.WaterFlow = isEnabledGlobalInMap ? (WaterFlow)result : ModEntry.DefaultWaterFlow;
 				}
 			};
 		}
