@@ -218,12 +218,13 @@ namespace WaterFlow
 				}
 				object result = WaterFlow.Up;
 				bool hasWater = e.NewLocation.waterTiles.waterTiles.Cast<WaterTiles.WaterTileData>().Any();
+				bool isCustomLocation = e.NewLocation.Name.StartsWith("Custom_", StringComparison.OrdinalIgnoreCase);
 				bool isEnabledLocalInMap = e.NewLocation.Map.Properties.TryGetValue(key: ModEntry.MapPropertyLocal, out PropertyValue localValue)
 					&& parseLocalAreaValues(localValue: localValue, mapSize: e.NewLocation.Map.Layers[0].LayerSize);
 				bool isEnabledGlobalInMap = e.NewLocation.Map.Properties.TryGetValue(key: ModEntry.MapPropertyGlobal, out PropertyValue value)
 					&& Enum.TryParse(enumType: typeof(WaterFlow), value: value, ignoreCase: true, out result)
 					&& result is WaterFlow and not WaterFlow.Up;
-				if (hasWater || isEnabledLocalInMap || isEnabledGlobalInMap)
+				if ((hasWater && !isCustomLocation) || isEnabledLocalInMap || isEnabledGlobalInMap)
 				{
 					if (config.VerboseLogging && !ModEntry.State.Value.VisitedLocations.ContainsKey(key: e.NewLocation.Name))
 					{
