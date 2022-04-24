@@ -143,11 +143,13 @@ namespace WaterFlow
 			{
 				int i = 0;
 				string[] fields = null;
+				string error = null;
+				List<(WaterFlow flow, Rectangle area)> areas = new();
 				try
 				{
 					ModEntry.State.Value.Areas.Clear();
 					fields = localValue.ToString().Trim().Split();
-					for (; i < fields.Length; i += 5)
+					for (; i < fields.Length && string.IsNullOrEmpty(error); i += 5)
 					{
 						if (Enum.TryParse(enumType: typeof(WaterFlow), value: fields[i], ignoreCase: true, out object result)
 							&& result is WaterFlow flow)
@@ -164,40 +166,37 @@ namespace WaterFlow
 							if (values[2] > 0 && values[3] > 0)
 							{
 								Rectangle area = new Rectangle(values[0], values[1], values[2], values[3]);
-								ModEntry.State.Value.Areas.Add((flow: flow, area: area));
+								areas.Add((flow: flow, area: area));
 								if (config.VerboseLogging)
 								{
 									this.Monitor.Log(
 										message: $"Parsed '{localValue}' to {nameof(WaterFlow)} {flow}, {nameof(Rectangle)} {area}.",
 										level: LogLevel.Debug);
 								}
-								return true;
 							}
 							else
 							{
-								this.Monitor.Log(
-									message: $"Invalid parsed area ({nameof(Rectangle)}): {string.Join(' ', values)}",
-									level: LogLevel.Error);
+								error = $"Invalid parsed area ({nameof(Rectangle)}): {string.Join(' ', values)}";
 							}
 						}
 						else
 						{
-							this.Monitor.Log(
-								message: $"Invalid parsed flow ({nameof(WaterFlow)}): {fields[i + 0]}",
-								level: LogLevel.Error);
+							error = $"Invalid parsed flow ({nameof(WaterFlow)}): {fields[i + 0]}";
 						}
 					}
 				}
 				catch (Exception e)
 				{
-					this.Monitor.Log(
-						message: $"Error while reading {nameof(WaterFlow)} entry {i} of {fields?.Length / 5 ?? 0}:{Environment.NewLine}{e}",
-						level: LogLevel.Error);
+					error = $"Error while reading {nameof(WaterFlow)} entry {i} of {fields?.Length / 5 ?? 0}:{Environment.NewLine}{e}";
 				}
-				this.Monitor.Log(
-					message: $"Failed to read local {nameof(WaterFlow)} entry:{Environment.NewLine}'{localValue}'",
-					level: LogLevel.Error);
-				return false;
+				if (!string.IsNullOrEmpty(error))
+				{
+					error += $"{Environment.NewLine}Failed to read local {nameof(WaterFlow)} entry:{Environment.NewLine}'{localValue}'";
+					this.Monitor.Log(message: error, level: LogLevel.Error);
+					return false;
+				}
+				ModEntry.State.Value.Areas = areas;
+				return true;
 			}
 
 			Harmony harmony = new Harmony(id: this.ModManifest.UniqueID);
