@@ -86,6 +86,9 @@ namespace WaterFlow
 			int forUL = isUpOrLeft ? 1 : 0;
 			int forDR = 1 - forUL;
 
+			int flipUL = isUpOrLeft ? 1 : -1;
+			int flipDR = isUpOrLeft ? -1 : 1;
+
 			const int n = 1;
 			int start = isLeftOrRight ? x : y;
 			int span = isLeftOrRight ? __instance.Map.Layers[0].LayerWidth : __instance.Map.Layers[0].LayerHeight;
@@ -104,8 +107,8 @@ namespace WaterFlow
 			int tileSize = isBottomTile ? ((int)(0 - waterPosition)) : 0;
 
 			Vector2 position = new Vector2(
-					x: (x + (n * forLR)) * Game1.tileSize + (tileCrop * forLR),
-					y: (y + (n * forUD)) * Game1.tileSize + (tileCrop * forUD));
+					x: (x + (n * forLR)) * Game1.tileSize + ((tileCrop * forLR) * flipUL),
+					y: (y + (n * forUD)) * Game1.tileSize + ((tileCrop * forUD) * flipUL));
 			Rectangle sourceRectangle = new Rectangle(
 					x: sourceX + __instance.waterAnimationIndex * Game1.tileSize,
 					y: sourceY + (((x + y) % 2 != 0) ? ((!waterTileFlip) ? Game1.tileSize * 2 : 0) : (waterTileFlip ? Game1.tileSize * 2 : 0)),
