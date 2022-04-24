@@ -25,13 +25,9 @@ namespace WaterFlow
 		Down = 2,
 		Left = 3
 	}
+
 	public class Config
 	{
-		public string[] UpwardsLocations { get; set; } = new[]
-		{
-			"Beach",
-			"Forest"
-		};
 		public bool VerboseLogging { get; set; } = true;
 	}
 
@@ -222,13 +218,12 @@ namespace WaterFlow
 				}
 				object result = WaterFlow.Up;
 				bool hasWater = e.NewLocation.waterTiles.waterTiles.Cast<WaterTiles.WaterTileData>().Any();
-				bool isDisabledInConfig = config.UpwardsLocations.Any(s => s.Equals(e.NewLocation.Name));
 				bool isEnabledLocalInMap = e.NewLocation.Map.Properties.TryGetValue(key: ModEntry.MapPropertyLocal, out PropertyValue localValue)
 					&& parseLocalAreaValues(localValue: localValue, mapSize: e.NewLocation.Map.Layers[0].LayerSize);
 				bool isEnabledGlobalInMap = e.NewLocation.Map.Properties.TryGetValue(key: ModEntry.MapPropertyGlobal, out PropertyValue value)
 					&& Enum.TryParse(enumType: typeof(WaterFlow), value: value, ignoreCase: true, out result)
 					&& result is WaterFlow and not WaterFlow.Up;
-				if ((!isDisabledInConfig && hasWater) || isEnabledLocalInMap || isEnabledGlobalInMap)
+				if (hasWater || isEnabledLocalInMap || isEnabledGlobalInMap)
 				{
 					if (config.VerboseLogging && !ModEntry.State.Value.VisitedLocations.ContainsKey(key: e.NewLocation.Name))
 					{
