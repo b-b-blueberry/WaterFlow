@@ -1,8 +1,8 @@
 ﻿{
-    "Name": "WaterFlow",
+    "Name": "Water Flow",
     "Author": "blueberry",
     "Version": "1.0.0",
-    "Description": "Changes the water flow direction for each location.",
+    "Description": "Modding tool to change water flow in game maps.",
     "UniqueID": "blueberry.WaterFlow",
     "EntryDll": "WaterFlow.dll",
     "UpdateKeys": [ "Nexus:11790" ]
