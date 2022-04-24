@@ -28,8 +28,8 @@ namespace WaterFlow
 
 	public class Config
 	{
-		public bool VerboseLogging { get; set; } = true;
 		public WaterFlow GlobalWaterFlow = WaterFlow.Down;
+		public bool VerboseLogging { get; set; } = false;
 	}
 
 	public class ModEntry : Mod
@@ -41,7 +41,6 @@ namespace WaterFlow
 		{
 			public WaterFlow WaterFlow = WaterFlow.Up;
 			public List<(WaterFlow flow, Rectangle area)> Areas = new List<(WaterFlow flow, Rectangle area)>();
-			public Dictionary<string, bool> VisitedLocations = new Dictionary<string, bool>();
 		}
 		private static readonly PerScreen<ModState> State = new PerScreen<ModState>(() => new ModState());
 
@@ -226,11 +225,11 @@ namespace WaterFlow
 					&& Enum.TryParse(enumType: typeof(WaterFlow), value: value, ignoreCase: true, out result) && result is WaterFlow;
 				if ((hasWater && !isCustomLocation) || isEnabledLocalInMap || isEnabledGlobalInMap)
 				{
-					if (config.VerboseLogging && !ModEntry.State.Value.VisitedLocations.ContainsKey(key: e.NewLocation.Name))
 					ModEntry.State.Value.WaterFlow = isEnabledGlobalInMap ? (WaterFlow)result : config.GlobalWaterFlow;
+					if (config.VerboseLogging)
 					{
 						this.Monitor.Log(
-							message: $"{e.NewLocation.Name} will flow {result.ToString().ToLower()}.",
+							message: $"{e.NewLocation.Name}: {ModEntry.State.Value.WaterFlow} ({(int)ModEntry.State.Value.WaterFlow})",
 							level: LogLevel.Debug);
 						foreach ((WaterFlow flow, Rectangle area) in ModEntry.State.Value.Areas)
 						{
@@ -238,7 +237,6 @@ namespace WaterFlow
 								message: $"({flow}: {area})",
 								level: LogLevel.Debug);
 						}
-						ModEntry.State.Value.VisitedLocations[e.NewLocation.Name] = true;
 					}
 				}
 			};
