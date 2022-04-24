@@ -223,8 +223,7 @@ namespace WaterFlow
 				bool isEnabledLocalInMap = e.NewLocation.Map.Properties.TryGetValue(key: ModEntry.MapPropertyLocal, out PropertyValue localValue)
 					&& parseLocalAreaValues(localValue: localValue, mapSize: e.NewLocation.Map.Layers[0].LayerSize);
 				bool isEnabledGlobalInMap = e.NewLocation.Map.Properties.TryGetValue(key: ModEntry.MapPropertyGlobal, out PropertyValue value)
-					&& Enum.TryParse(enumType: typeof(WaterFlow), value: value, ignoreCase: true, out result)
-					&& result is WaterFlow and not WaterFlow.Up;
+					&& Enum.TryParse(enumType: typeof(WaterFlow), value: value, ignoreCase: true, out result) && result is WaterFlow;
 				if ((hasWater && !isCustomLocation) || isEnabledLocalInMap || isEnabledGlobalInMap)
 				{
 					if (config.VerboseLogging && !ModEntry.State.Value.VisitedLocations.ContainsKey(key: e.NewLocation.Name))
