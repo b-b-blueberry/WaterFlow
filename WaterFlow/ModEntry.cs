@@ -29,13 +29,13 @@ namespace WaterFlow
 	public class Config
 	{
 		public bool VerboseLogging { get; set; } = true;
+		public WaterFlow GlobalWaterFlow = WaterFlow.Down;
 	}
 
 	public class ModEntry : Mod
 	{
 		public const string MapPropertyGlobal = "blueberry.water.flow.global";
 		public const string MapPropertyLocal = "blueberry.water.flow.local";
-		public const WaterFlow DefaultWaterFlow = WaterFlow.Down;
 
 		private class ModState
 		{
@@ -216,7 +216,8 @@ namespace WaterFlow
 					ModEntry.State.Value.Areas.Clear();
 					return;
 				}
-				object result = WaterFlow.Up;
+				
+				object result = config.GlobalWaterFlow;
 				bool isCustomLocation = e.NewLocation.Name.StartsWith("Custom_", StringComparison.OrdinalIgnoreCase);
 				bool hasWater = e.NewLocation.waterTiles?.waterTiles?.Cast<WaterTiles.WaterTileData>().Any() is bool b && b;
 				bool isEnabledLocalInMap = e.NewLocation.Map.Properties.TryGetValue(key: ModEntry.MapPropertyLocal, out PropertyValue localValue)
@@ -227,6 +228,7 @@ namespace WaterFlow
 				if ((hasWater && !isCustomLocation) || isEnabledLocalInMap || isEnabledGlobalInMap)
 				{
 					if (config.VerboseLogging && !ModEntry.State.Value.VisitedLocations.ContainsKey(key: e.NewLocation.Name))
+					ModEntry.State.Value.WaterFlow = isEnabledGlobalInMap ? (WaterFlow)result : config.GlobalWaterFlow;
 					{
 						this.Monitor.Log(
 							message: $"{e.NewLocation.Name} will flow {result.ToString().ToLower()}.",
@@ -239,7 +241,6 @@ namespace WaterFlow
 						}
 						ModEntry.State.Value.VisitedLocations[e.NewLocation.Name] = true;
 					}
-					ModEntry.State.Value.WaterFlow = isEnabledGlobalInMap ? (WaterFlow)result : ModEntry.DefaultWaterFlow;
 				}
 			};
 		}
