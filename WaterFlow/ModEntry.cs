@@ -16,6 +16,15 @@ using Rectangle = Microsoft.Xna.Framework.Rectangle;
 
 namespace WaterFlow
 {
+	public enum WaterFlow
+	{
+		Hide = -2,
+		None = -1,
+		Up = 0,
+		Right = 1,
+		Down = 2,
+		Left = 3
+	}
 	public class Config
 	{
 		public string[] UpwardsLocations { get; set; } = new[]
@@ -28,14 +37,6 @@ namespace WaterFlow
 
 	public class ModEntry : Mod
 	{
-		public enum WaterFlow
-		{
-			None = -1,
-			Up = 0,
-			Right = 1,
-			Down = 2,
-			Left = 3
-		}
 		public const string MapPropertyGlobal = "blueberry.water.flow.global";
 		public const string MapPropertyLocal = "blueberry.water.flow.local";
 		public const WaterFlow DefaultWaterFlow = WaterFlow.Down;
@@ -56,6 +57,9 @@ namespace WaterFlow
 			WaterFlow waterFlow = isLocal
 				? ModEntry.State.Value.Areas[i].flow
 				: ModEntry.State.Value.WaterFlow;
+
+			if (waterFlow is WaterFlow.Hide)
+				return false;
 
 			if (waterFlow is WaterFlow.Up)
 				return true;
