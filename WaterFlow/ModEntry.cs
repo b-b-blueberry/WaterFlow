@@ -60,9 +60,6 @@ namespace WaterFlow
 			if (waterFlow is WaterFlow.Up)
 				return true;
 
-			if (waterFlow is WaterFlow.None)
-				__instance.waterPosition = 0;
-
 			const int sourceX = 0;
 			const int sourceY = 2064;
 			const int rotation = 0;
@@ -86,15 +83,22 @@ namespace WaterFlow
 			bool isTopTile = start == 0 || !__instance.waterTiles[x - (n * forLR), y - (n * forUD)];
 			bool isBottomTile = start == span - 1 || !__instance.waterTiles[x + (n * forLR), y + (n * forUD)];
 
-			int tileCrop = (int)(Game1.tileSize - __instance.waterPosition) + 1;
-			int tileSize = isBottomTile ? ((int)(0 - __instance.waterPosition)) : 0;
+			float waterPosition = __instance.waterPosition;
+			bool waterTileFlip = __instance.waterTileFlip;
+			if (waterFlow is WaterFlow.None)
+			{
+				waterPosition = 1;
+				waterTileFlip = false;
+			}
+			int tileCrop = (int)((Game1.tileSize * forDR) - waterPosition) + 1;
+			int tileSize = isBottomTile ? ((int)(0 - waterPosition)) : 0;
 
 			Vector2 position = new Vector2(
-					x: (x + (n * forLR)) * Game1.tileSize - (tileCrop * forLR),
-					y: (y + (n * forUD)) * Game1.tileSize - (tileCrop * forUD));
+					x: (x + (n * forLR)) * Game1.tileSize + (tileCrop * forLR),
+					y: (y + (n * forUD)) * Game1.tileSize + (tileCrop * forUD));
 			Rectangle sourceRectangle = new Rectangle(
 					x: sourceX + __instance.waterAnimationIndex * Game1.tileSize,
-					y: sourceY + (((x + y) % 2 != 0) ? ((!__instance.waterTileFlip) ? Game1.tileSize * 2 : 0) : (__instance.waterTileFlip ? Game1.tileSize * 2 : 0)) + (isBottomTile ? (int)__instance.waterPosition : 0),
+					y: sourceY + (((x + y) % 2 != 0) ? ((!waterTileFlip) ? Game1.tileSize * 2 : 0) : (waterTileFlip ? Game1.tileSize * 2 : 0)),
 					width: Game1.tileSize + (tileSize * forLR),
 					height: Game1.tileSize + (tileSize * forUD));
 			b.Draw(
@@ -121,9 +125,9 @@ namespace WaterFlow
 							y: y * Game1.tileSize)),
 					sourceRectangle: new Rectangle(
 						x: sourceX + __instance.waterAnimationIndex * Game1.tileSize,
-						y: sourceY + (((x + y + 1) % 2 != 0) ? ((!__instance.waterTileFlip) ? Game1.tileSize * 2 : 0) : (__instance.waterTileFlip ? Game1.tileSize * 2 : 0)),
-						width: Game1.tileSize - (isLeftOrRight ? (int)(Game1.tileSize - __instance.waterPosition) + 1 : 0),
-						height: Game1.tileSize - (isLeftOrRight ? 0 : (int)(Game1.tileSize - __instance.waterPosition) + 1)),
+						y: sourceY + (((x + y + 1) % 2 != 0) ? ((!waterTileFlip) ? Game1.tileSize * 2 : 0) : (waterTileFlip ? Game1.tileSize * 2 : 0)),
+						width: Game1.tileSize - (isLeftOrRight ? (int)(Game1.tileSize - waterPosition) + 1 : 0),
+						height: Game1.tileSize - (isLeftOrRight ? 0 : (int)(Game1.tileSize - waterPosition) + 1)),
 					color: color,
 					rotation: rotation,
 					origin: new Vector2(origin),
