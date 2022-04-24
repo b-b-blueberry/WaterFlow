@@ -52,11 +52,11 @@ namespace WaterFlow
 		public static bool GameLocation_DrawWaterTile_Prefix(GameLocation __instance,
 			SpriteBatch b, int x, int y, Colour color)
 		{
-			WaterFlow waterFlow = ModEntry.State.Value.WaterFlow;
+			bool isLocal = ModEntry.State.Value.Areas.FindIndex(pair => pair.area.Contains(x, y)) is int i && i >= 0;
+			WaterFlow waterFlow = isLocal
+				? ModEntry.State.Value.Areas[i].flow
+				: ModEntry.State.Value.WaterFlow;
 
-			if (ModEntry.State.Value.Areas.FirstOrDefault(pair => pair.area.Contains(x, y)) is var a && a != default)
-				waterFlow = a.flow;
-			
 			if (waterFlow is WaterFlow.Up)
 				return true;
 
