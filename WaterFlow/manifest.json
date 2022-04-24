@@ -5,5 +5,5 @@
     "Description": "Changes the water flow direction for each location.",
     "UniqueID": "blueberry.WaterFlow",
     "EntryDll": "WaterFlow.dll",
-    "UpdateKeys": [ "Nexus:????" ]
+    "UpdateKeys": [ "Nexus:11790" ]
 }
