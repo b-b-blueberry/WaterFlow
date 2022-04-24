@@ -1,0 +1,16 @@
+﻿{
+    "Name": "[CP] Water Flow",
+    "Author": "blueberry",
+    "Version": "1.0.0",
+    "Description": "Change water flow directions of maps from the base game.",
+    "UniqueID": "blueberry.WaterFlow.CP",
+    "UpdateKeys": [ "Nexus:????" ],
+    "ContentPackFor": {
+        "UniqueID": "Pathoschild.ContentPatcher"
+    },
+    "Dependencies": [
+        {
+            "UniqueID": "blueberry.WaterFlow"
+        }
+    ]
+}
