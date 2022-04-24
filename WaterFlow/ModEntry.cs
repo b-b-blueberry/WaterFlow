@@ -37,12 +37,23 @@ namespace WaterFlow
 		public const string MapPropertyGlobal = "blueberry.water.flow.global";
 		public const string MapPropertyLocal = "blueberry.water.flow.local";
 
-		private class ModState
+		public class ModState
 		{
-			public WaterFlow WaterFlow = WaterFlow.Up;
-			public List<(WaterFlow flow, Rectangle area)> Areas = new List<(WaterFlow flow, Rectangle area)>();
+			public WaterFlow WaterFlow;
+			public List<(WaterFlow flow, Rectangle area)> Areas;
+
+			public ModState()
+			{
+				this.Reset();
+			}
+
+			public void Reset()
+			{
+				this.WaterFlow = default;
+				this.Areas = new();
+			}
 		}
-		private static readonly PerScreen<ModState> State = new PerScreen<ModState>(() => new ModState());
+		public static readonly PerScreen<ModState> State = new(() => new ModState());
 
 
 		public static bool GameLocation_DrawWaterTile_Prefix(GameLocation __instance,
@@ -207,14 +218,13 @@ namespace WaterFlow
 				original: AccessTools.Method(type: typeof(GameLocation), name: nameof(GameLocation.drawWaterTile),
 				parameters: new Type[] { typeof(SpriteBatch), typeof(int), typeof(int), typeof(Colour) }),
 				prefix: new HarmonyMethod(methodType: typeof(ModEntry), methodName: nameof(ModEntry.GameLocation_DrawWaterTile_Prefix)));
+			
 			helper.Events.Player.Warped += (object sender, WarpedEventArgs e) =>
 			{
+				ModEntry.State.Value.Reset();
+
 				if (e.NewLocation is null)
-				{
-					ModEntry.State.Value.WaterFlow = WaterFlow.Up;
-					ModEntry.State.Value.Areas.Clear();
 					return;
-				}
 				
 				object result = config.GlobalWaterFlow;
 				bool isCustomLocation = e.NewLocation.Name.StartsWith("Custom_", StringComparison.OrdinalIgnoreCase);
