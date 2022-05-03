@@ -10,7 +10,7 @@
         },
         {
             "Action": "EditMap",
-            "Target": "Maps/Farm, Maps/Farm_Combat, Maps/Farm_Foraging, Maps/Farm_FourCorners, Maps/Woods, Maps/FishingGame, Maps/Submarine, Maps/BoatTunnel, Maps/Caldera, Maps/IslandSouthEastCave, Maps/IslandSouthEastCave_pirates",
+            "Target": "Maps/Farm, Maps/Farm_Combat, Maps/Farm_Foraging, Maps/Farm_FourCorners, Maps/Woods, Maps/FishingGame, Maps/Submarine, Maps/BoatTunnel, Maps/IslandSouthEastCave, Maps/IslandSouthEastCave_pirates",
             "MapProperties": {
                 "blueberry.water.flow.global": "None"
             }
