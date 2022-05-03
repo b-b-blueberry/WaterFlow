@@ -59,6 +59,28 @@ namespace WaterFlow
 		public static bool GameLocation_DrawWaterTile_Prefix(GameLocation __instance,
 			SpriteBatch b, int x, int y, Colour color)
 		{
+			void draw(Vector2 position, Rectangle sourceRectangle)
+			{
+				const float scale = 1;
+				const float rotation = 0;
+				const float origin = 0;
+				const SpriteEffects effects = SpriteEffects.None;
+				const float layerDepth = 0.56f;
+
+				b.Draw(
+					texture: Game1.mouseCursors,
+					position: Game1.GlobalToLocal(
+						viewport: Game1.viewport,
+						globalPosition: position),
+					sourceRectangle: sourceRectangle,
+					color: color,
+					rotation: rotation,
+					origin: new Vector2(origin),
+					scale: scale,
+					effects: effects,
+					layerDepth: layerDepth);
+			}
+
 			bool isLocal = ModEntry.State.Value.Areas.FindIndex(pair => pair.area.Contains(x, y)) is int i && i >= 0;
 			WaterFlow waterFlow = isLocal
 				? ModEntry.State.Value.Areas[i].flow
@@ -67,34 +89,33 @@ namespace WaterFlow
 			if (waterFlow is WaterFlow.Hide)
 				return false;
 
-			if (waterFlow is WaterFlow.Up)
-				return true;
-
 			const int sourceX = 0;
 			const int sourceY = 2064;
-			const int rotation = 0;
-			const int origin = 0;
-			const int scale = 1;
-			const SpriteEffects effects = SpriteEffects.None;
-			const float layerDepth = 0.56f;
 
 			bool isLeftOrRight = waterFlow is WaterFlow.Left or WaterFlow.Right;
+			bool isUpOrDown = waterFlow is WaterFlow.Up or WaterFlow.Down;
 			bool isUpOrLeft = waterFlow is WaterFlow.Up or WaterFlow.Left;
+			bool isDownOrRight = waterFlow is WaterFlow.Down or WaterFlow.Right;
 
 			int forLR = isLeftOrRight ? 1 : 0;
-			int forUD = 1 - forLR;
+			int forUD = isUpOrDown ? 1 : 0;
 			int forUL = isUpOrLeft ? 1 : 0;
-			int forDR = 1 - forUL;
+			int forDR = isUpOrLeft ? 0 : 1;
 
-			int flipUL = isUpOrLeft ? 1 : -1;
-			int flipDR = isUpOrLeft ? -1 : 1;
+			int flipUL = isUpOrLeft ? -1 : 1;
 
 			const int n = 1;
 			int start = isLeftOrRight ? x : y;
 			int span = isLeftOrRight ? __instance.Map.Layers[0].LayerWidth : __instance.Map.Layers[0].LayerHeight;
 
 			bool isTopTile = start == 0 || !__instance.waterTiles[x - (n * forLR), y - (n * forUD)];
-			bool isBottomTile = start == span - 1 || !__instance.waterTiles[x + (n * forLR), y + (n * forUD)];
+			bool isBottomTile = start == span - n || !__instance.waterTiles[x + (n * forLR), y + (n * forUD)];
+			if (isDownOrRight)
+			{
+				bool temp = isTopTile;
+				isTopTile = isBottomTile;
+				isBottomTile = temp;
+			}
 
 			float waterPosition = __instance.waterPosition;
 			bool waterTileFlip = __instance.waterTileFlip;
@@ -103,50 +124,42 @@ namespace WaterFlow
 				waterPosition = 1;
 				waterTileFlip = false;
 			}
-			int tileCrop = (int)((Game1.tileSize * forDR) - waterPosition) + 1;
-			int tileSize = isBottomTile ? ((int)(0 - waterPosition)) : 0;
+
+			int tileCrop = (int)(isDownOrRight || !isTopTile
+				? waterPosition
+				: 0);
+			int tileSize = (int)(isTopTile ? waterPosition : 0);
+			int sourceOffset = (((x + y) % 2 != 0)
+				? ((!waterTileFlip) ? Game1.tileSize * 2 : 0)
+				: (waterTileFlip ? Game1.tileSize * 2 : 0)) + tileSize;
 
 			Vector2 position = new Vector2(
-					x: (x + (n * forLR)) * Game1.tileSize + ((tileCrop * forLR) * flipUL),
-					y: (y + (n * forUD)) * Game1.tileSize + ((tileCrop * forUD) * flipUL));
+				x: (x * Game1.tileSize) + (tileCrop * forLR * flipUL),
+				y: (y * Game1.tileSize) + (tileCrop * forUD * flipUL));
 			Rectangle sourceRectangle = new Rectangle(
-					x: sourceX + __instance.waterAnimationIndex * Game1.tileSize,
-					y: sourceY + (((x + y) % 2 != 0) ? ((!waterTileFlip) ? Game1.tileSize * 2 : 0) : (waterTileFlip ? Game1.tileSize * 2 : 0)),
-					width: Game1.tileSize + (tileSize * forLR),
-					height: Game1.tileSize + (tileSize * forUD));
-			b.Draw(
-				texture: Game1.mouseCursors,
-				position: Game1.GlobalToLocal(
-					viewport: Game1.viewport,
-					globalPosition: position),
-				sourceRectangle: sourceRectangle,
-				color: color,
-				rotation: rotation,
-				origin: new Vector2(origin),
-				scale: scale,
-				effects: effects,
-				layerDepth: layerDepth);
+				x: sourceX + (__instance.waterAnimationIndex * Game1.tileSize),
+				y: sourceY + (sourceOffset * forUD),
+				width: Game1.tileSize + (-tileSize * forLR),
+				height: Game1.tileSize + (-tileSize * forUD));
 
-			if (isTopTile)
+			draw(position: position, sourceRectangle: sourceRectangle);
+
+			if (isBottomTile)
 			{
-				b.Draw(
-					texture: Game1.mouseCursors,
-					position: Game1.GlobalToLocal(
-						viewport: Game1.viewport,
-						globalPosition: new Vector2(
-							x: x * Game1.tileSize,
-							y: y * Game1.tileSize)),
-					sourceRectangle: new Rectangle(
-						x: sourceX + __instance.waterAnimationIndex * Game1.tileSize,
-						y: sourceY + (((x + y + 1) % 2 != 0) ? ((!waterTileFlip) ? Game1.tileSize * 2 : 0) : (waterTileFlip ? Game1.tileSize * 2 : 0)),
-						width: Game1.tileSize - (isLeftOrRight ? (int)(Game1.tileSize - waterPosition) + 1 : 0),
-						height: Game1.tileSize - (isLeftOrRight ? 0 : (int)(Game1.tileSize - waterPosition) + 1)),
-					color: color,
-					rotation: rotation,
-					origin: new Vector2(origin),
-					scale: scale,
-					effects: effects,
-					layerDepth: layerDepth);
+
+				sourceOffset = ((((x + (1 * forLR)) + (y + (1 * forUD))) % 2 != 0)
+						? ((!waterTileFlip) ? Game1.tileSize * 2 : 0)
+						: (waterTileFlip ? Game1.tileSize * 2 : 0));
+
+				position = new Vector2(
+					x: ((x + (1 * forLR * forUL)) * Game1.tileSize) - (int)(waterPosition * forUL),
+					y: ((y + (1 * forUD * forUL)) * Game1.tileSize) - (int)(waterPosition * forUL));
+				sourceRectangle = new Rectangle(
+					x: sourceX + __instance.waterAnimationIndex * Game1.tileSize,
+					y: sourceY + ((sourceOffset - (int)(waterPosition * forDR)) * forUD),
+					width: Game1.tileSize - (int)((Game1.tileSize - waterPosition - 1) * forLR),
+					height: Game1.tileSize - (int)((Game1.tileSize - waterPosition - 1) * forUD));
+				draw(position: position, sourceRectangle: sourceRectangle);
 			}
 
 			return false;
