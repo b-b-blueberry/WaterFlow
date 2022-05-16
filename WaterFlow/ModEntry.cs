@@ -28,12 +28,12 @@ namespace WaterFlow
 
 	public class Config
 	{
-		public WaterFlow GlobalWaterFlow = WaterFlow.Down;
 		public bool VerboseLogging { get; set; } = false;
 	}
 
 	public class ModEntry : Mod
 	{
+		public const WaterFlow DefaultWaterFlow = WaterFlow.Down;
 		public const string MapPropertyGlobal = "blueberry.water.flow.global";
 		public const string MapPropertyLocal = "blueberry.water.flow.local";
 
@@ -242,7 +242,7 @@ namespace WaterFlow
 				if (e.NewLocation is null)
 					return;
 				
-				object result = config.GlobalWaterFlow;
+				object result = ModEntry.DefaultWaterFlow;
 				bool isCustomLocation = e.NewLocation.Name.StartsWith("Custom_", StringComparison.OrdinalIgnoreCase);
 				bool hasWater = e.NewLocation.waterTiles?.waterTiles?.Cast<WaterTiles.WaterTileData>().Any() is bool b && b;
 				bool isEnabledLocalInMap = e.NewLocation.Map.Properties.TryGetValue(key: ModEntry.MapPropertyLocal, out PropertyValue localValue)
@@ -251,7 +251,7 @@ namespace WaterFlow
 					&& Enum.TryParse(enumType: typeof(WaterFlow), value: value, ignoreCase: true, out result) && result is WaterFlow;
 				if ((hasWater && !isCustomLocation) || isEnabledLocalInMap || isEnabledGlobalInMap)
 				{
-					ModEntry.State.Value.WaterFlow = isEnabledGlobalInMap ? (WaterFlow)result : config.GlobalWaterFlow;
+					ModEntry.State.Value.WaterFlow = isEnabledGlobalInMap ? (WaterFlow)result : ModEntry.DefaultWaterFlow;
 					if (config.VerboseLogging)
 					{
 						this.Monitor.Log(
