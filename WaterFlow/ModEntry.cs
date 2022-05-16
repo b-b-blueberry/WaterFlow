@@ -128,16 +128,18 @@ namespace WaterFlow
 			int tileCrop = (int)(isDownOrRight || !isTopTile
 				? waterPosition
 				: 0);
-			int tileSize = (int)(isTopTile ? waterPosition : 0);
+			int tileSize = (int)(isTopTile
+				? waterPosition
+				: 0);
 			int sourceOffset = (((x + y) % 2 != 0)
 				? ((!waterTileFlip) ? Game1.tileSize * 2 : 0)
-				: (waterTileFlip ? Game1.tileSize * 2 : 0)) + tileSize;
+				: (waterTileFlip ? Game1.tileSize * 2 : 0));
 
 			Vector2 position = new Vector2(
 				x: (x * Game1.tileSize) + (tileCrop * forLR * flipUL),
 				y: (y * Game1.tileSize) + (tileCrop * forUD * flipUL));
 			Rectangle sourceRectangle = new Rectangle(
-				x: sourceX + (__instance.waterAnimationIndex * Game1.tileSize),
+				x: sourceX + (tileSize * forLR * forUL) + (__instance.waterAnimationIndex * Game1.tileSize),
 				y: sourceY + (sourceOffset * forUD),
 				width: Game1.tileSize + (-tileSize * forLR),
 				height: Game1.tileSize + (-tileSize * forUD));
@@ -152,13 +154,13 @@ namespace WaterFlow
 						: (waterTileFlip ? Game1.tileSize * 2 : 0));
 
 				position = new Vector2(
-					x: ((x + (1 * forLR * forUL)) * Game1.tileSize) - (int)(waterPosition * forUL),
-					y: ((y + (1 * forUD * forUL)) * Game1.tileSize) - (int)(waterPosition * forUL));
+					x: ((x + (1 * forLR * forUL)) * Game1.tileSize) - (int)(waterPosition * forLR * forUL),
+					y: ((y + (1 * forUD * forUL)) * Game1.tileSize) - (int)(waterPosition * forUD * forUL));
 				sourceRectangle = new Rectangle(
-					x: sourceX + __instance.waterAnimationIndex * Game1.tileSize,
-					y: sourceY + ((sourceOffset - (int)(waterPosition * forDR)) * forUD),
-					width: Game1.tileSize - (int)((Game1.tileSize - waterPosition - 1) * forLR),
-					height: Game1.tileSize - (int)((Game1.tileSize - waterPosition - 1) * forUD));
+					x: (int)(sourceX + ((Game1.tileSize - waterPosition) * forLR * forDR) + (__instance.waterAnimationIndex * Game1.tileSize)),
+					y: (int)(sourceY + ((sourceOffset - (waterPosition * forDR)) * forUD)),
+					width: (int)(Game1.tileSize - ((Game1.tileSize - waterPosition - 1) * forLR)) - (1 * forLR),
+					height: (int)(Game1.tileSize - ((Game1.tileSize - waterPosition - 1) * forUD)) - (1 * forUD));
 				draw(position: position, sourceRectangle: sourceRectangle);
 			}
 
