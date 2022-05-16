@@ -8,6 +8,8 @@ using StardewValley;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using System.Reflection.Emit;
 using xTile;
 using xTile.Dimensions;
 using xTile.ObjectModel;
@@ -55,6 +57,18 @@ namespace WaterFlow
 		}
 		public static readonly PerScreen<ModState> State = new(() => new ModState());
 
+
+		public static IEnumerable<CodeInstruction> GameLocation_DrawWater_Transpiler(IEnumerable<CodeInstruction> instructions)
+		{
+			MethodInfo m1 = AccessTools.PropertyGetter(type: typeof(xTile.Dimensions.Rectangle), name: nameof(xTile.Dimensions.Rectangle.Width));
+			List<CodeInstruction> il = instructions.ToList();
+			if (il.FindIndex(match: (CodeInstruction i) => i.opcode == OpCodes.Call && (MethodInfo)i.operand == m1) is int i1
+				&& il.FindIndex(startIndex: i1, match: (CodeInstruction i) => i.opcode == OpCodes.Ldc_I4_1) is int i2)
+			{
+				il[i2].opcode = OpCodes.Ldc_I4_2;
+			}
+			return il;
+		}
 
 		public static bool GameLocation_DrawWaterTile_Prefix(GameLocation __instance,
 			SpriteBatch b, int x, int y, Colour color)
@@ -236,7 +250,10 @@ namespace WaterFlow
 				original: AccessTools.Method(type: typeof(GameLocation), name: nameof(GameLocation.drawWaterTile),
 				parameters: new Type[] { typeof(SpriteBatch), typeof(int), typeof(int), typeof(Colour) }),
 				prefix: new HarmonyMethod(methodType: typeof(ModEntry), methodName: nameof(ModEntry.GameLocation_DrawWaterTile_Prefix)));
-			
+			harmony.Patch(
+				original: AccessTools.Method(type: typeof(GameLocation), name: nameof(GameLocation.drawWater)),
+				transpiler: new HarmonyMethod(methodType: typeof(ModEntry), methodName: nameof(ModEntry.GameLocation_DrawWater_Transpiler)));
+
 			helper.Events.Player.Warped += (object sender, WarpedEventArgs e) =>
 			{
 				ModEntry.State.Value.Reset();
