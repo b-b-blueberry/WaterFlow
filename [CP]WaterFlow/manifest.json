@@ -2,7 +2,7 @@
     "Name": "[CP] Water Flow",
     "Author": "blueberry",
     "Version": "1.0.0",
-    "Description": "Change water flow directions of maps from the base game.",
+    "Description": "Changes the water flow of non-custom game locations.",
     "UniqueID": "blueberry.WaterFlow.CP",
     "UpdateKeys": [ "Nexus:????" ],
     "ContentPackFor": {

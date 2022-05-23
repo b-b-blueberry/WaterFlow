@@ -2,7 +2,7 @@
     "Name": "Water Flow",
     "Author": "blueberry",
     "Version": "1.0.0",
-    "Description": "Modding tool to change water flow in game maps.",
+    "Description": "Change the water flow of game locations.",
     "UniqueID": "blueberry.WaterFlow",
     "EntryDll": "WaterFlow.dll",
     "UpdateKeys": [ "Nexus:11790" ]
