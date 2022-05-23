@@ -154,7 +154,7 @@ namespace WaterFlow
 				y: (y * Game1.tileSize) + (tileCrop * forUD * flipUL));
 			Rectangle sourceRectangle = new Rectangle(
 				x: sourceX + (tileSize * forLR * forUL) + (__instance.waterAnimationIndex * Game1.tileSize),
-				y: sourceY + (sourceOffset * forUD),
+				y: sourceY + (tileSize * forUD * forUL) + (sourceOffset * forUD),
 				width: Game1.tileSize + (-tileSize * forLR),
 				height: Game1.tileSize + (-tileSize * forUD));
 
