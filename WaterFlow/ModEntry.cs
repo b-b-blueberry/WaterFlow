@@ -55,8 +55,8 @@ namespace WaterFlow
 				this.Areas = new();
 			}
 		}
-		public static readonly PerScreen<ModState> State = new(() => new ModState());
 
+		public static readonly PerScreen<ModState> State = new(() => new ModState());
 
 		public static IEnumerable<CodeInstruction> GameLocation_DrawWater_Transpiler(IEnumerable<CodeInstruction> instructions)
 		{
@@ -145,9 +145,9 @@ namespace WaterFlow
 			int tileSize = (int)(isTopTile
 				? waterPosition
 				: 0);
-			int sourceOffset = (((x + y) % 2 != 0)
+			int sourceOffset = ((x + y) % 2 != 0)
 				? ((!waterTileFlip) ? Game1.tileSize * 2 : 0)
-				: (waterTileFlip ? Game1.tileSize * 2 : 0));
+				: (waterTileFlip ? Game1.tileSize * 2 : 0);
 
 			Vector2 position = new Vector2(
 				x: (x * Game1.tileSize) + (tileCrop * forLR * flipUL),
@@ -162,11 +162,9 @@ namespace WaterFlow
 
 			if (isBottomTile)
 			{
-
-				sourceOffset = ((((x + (1 * forLR)) + (y + (1 * forUD))) % 2 != 0)
+				sourceOffset = (((x + (1 * forLR)) + (y + (1 * forUD))) % 2 != 0)
 						? ((!waterTileFlip) ? Game1.tileSize * 2 : 0)
-						: (waterTileFlip ? Game1.tileSize * 2 : 0));
-
+						: (waterTileFlip ? Game1.tileSize * 2 : 0);
 				position = new Vector2(
 					x: ((x + (1 * forLR * forUL)) * Game1.tileSize) - (int)(waterPosition * forLR * forUL),
 					y: ((y + (1 * forUD * forUL)) * Game1.tileSize) - (int)(waterPosition * forUD * forUL));
